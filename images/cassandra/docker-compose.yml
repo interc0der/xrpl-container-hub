@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  cassandra-0:
+    image: cassandra:latest
+    restart: always
+    networks:
+      cassandra:
+        ipv4_address: 172.18.0.10
+    ports:
+      - 7000:7000
+      - 9042:9042
+    volumes:
+      - node_0_data:/var/lib/cassandra/data
+      - node_0_commit:/var/lib/cassandra/commitlog
+      - node_0_hint:/var/lib/cassandra/hints
+      - node_0_cache:/var/lib/cassandra/saved_caches
+      - node_0_log:/var/log/cassandra
+    environment:
+      - CASSANDRA_SEEDS=cassandra-0
+      - CASSANDRA_CLUSTER_NAME=cluster
+      - CASSANDRA_NUM_TOKENS=8
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_RACK=rack0
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - MAX_HEAP_SIZE=8G
+      - HEAP_NEWSIZE=200M
+
+  cassandra-1:
+    image: cassandra:latest
+    networks:
+      cassandra:
+        ipv4_address: 172.18.0.11
+    restart: always
+    ports:
+      - 1700:7000
+      - 19042:9042
+    volumes:
+      - node_1_data:/var/lib/cassandra/data
+      - node_1_commit:/var/lib/cassandra/commitlog
+      - node_1_hint:/var/lib/cassandra/hints
+      - node_1_cache:/var/lib/cassandra/saved_caches
+      - node_1_log:/var/log/cassandra
+    environment:
+      - CASSANDRA_SEEDS=cassandra-0
+      - CASSANDRA_CLUSTER_NAME=cluster
+      - CASSANDRA_NUM_TOKENS=8
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_RACK=rack0
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - MAX_HEAP_SIZE=8G
+      - HEAP_NEWSIZE=200M
+
+  cassandra-2:
+    image: cassandra:latest
+    restart: always
+    networks:
+      cassandra:
+        ipv4_address: 172.18.0.12
+    ports:
+      - 27000:7000
+      - 29042:9042
+    volumes:
+      - node_2_data:/var/lib/cassandra/data
+      - node_2_commit:/var/lib/cassandra/commitlog
+      - node_2_hint:/var/lib/cassandra/hints
+      - node_2_cache:/var/lib/cassandra/saved_caches
+      - node_2_log:/var/log/cassandra
+    environment:
+      - CASSANDRA_SEEDS=cassandra-0
+      - CASSANDRA_CLUSTER_NAME=cluster
+      - CASSANDRA_NUM_TOKENS=8
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_RACK=rack0
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - MAX_HEAP_SIZE=8G
+      - HEAP_NEWSIZE=200M
+
+volumes:
+  node_0_data:
+  node_1_data:
+  node_2_data:
+  node_0_log:
+  node_1_log:
+  node_2_log:
+  node_0_commit:
+  node_1_commit:
+  node_2_commit:
+  node_0_cache:
+  node_1_cache:
+  node_2_cache:
+  node_0_hint:
+  node_1_hint:
+  node_2_hint:
+
+networks:
+  cassandra:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.18.0.0/16

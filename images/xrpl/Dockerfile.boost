@@ -1,0 +1,77 @@
+FROM ubuntu:20.04 as build
+ARG DEBIAN_FRONTEND=noninteractive
+ARG VERSION=1.9.1
+
+SHELL ["/bin/bash", "-c"]
+
+RUN export LANGUAGE=C.UTF-8; export LANG=C.UTF-8; export LC_ALL=C.UTF-8
+
+COPY docker-entrypoint.sh /
+
+RUN apt-get -y update
+
+RUN apt-get -y update && \
+apt-get -y install \
+git \ 
+pkg-config \
+protobuf-compiler \
+libprotobuf-dev \ 
+libssl-dev \
+wget \
+build-essential \
+doxygen 
+
+RUN git clone --single-branch --branch "${VERSION}" https://github.com/ripple/rippled.git /opt/ripple
+
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.16.3/cmake-3.16.3-Linux-x86_64.sh && \
+    sh cmake-3.16.3-Linux-x86_64.sh --prefix=/usr/local --exclude-subdir && \
+    wget -q -O $HOME/boost_1_75_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.75.0/source/boost_1_75_0.tar.gz && \
+    echo "unzipping boost pkg" && \
+    tar -xzf $HOME/boost_1_75_0.tar.gz -C $HOME && \
+    cd $HOME/boost_1_75_0 && \
+    echo "running boostrap script" && \
+    ./bootstrap.sh && \
+    echo "running b2 script" && \
+    ./b2 -j$(nproc) && \
+    echo "export BOOST_ROOT=$HOME/boost_1_75_0" >> $HOME/.profile && \
+    source $HOME/.profile && \
+    echo "finished building boost ---> rippled time" 
+
+RUN mkdir /opt/ripple/my_build && \
+    cd /opt/ripple/my_build && \
+    echo "preping cmake build script" && \
+    cmake .. -DBoost_NO_BOOST_CMAKE=ON && \
+    make -j8 && \
+    strip -s rippled && \
+    echo "Build host: `hostname`" > release.info && \
+    echo "Build date: `date`" >> release.info && \
+    echo "Build md5: `md5sum rippled`" >> release.info && \
+    echo "Git remotes:" >> release.info && \ 
+    git remote -v >> release.info && \
+    echo "Git status:" >> release.info && \
+    git status -v >> release.info && \
+    echo "Git log [last 20]:" >> release.info && \
+    echo "congratulations, you are finished building rippled" && \
+    ls /opt/rippled/my_build
+
+COPY ./config/rippled.cfg /opt/ripple/.ripple/rippled.conf
+COPY ./config/validators.txt /opt/ripple/.ripple/validators.txt
+
+FROM ubuntu:20.04
+COPY --from=build /opt/ripple/ /opt/ripple/
+
+RUN export LANGUAGE=C.UTF-8; export LANG=C.UTF-8; export LC_ALL=C.UTF-8
+ENV PATH="/opt/ripple/build/bin:${PATH}"
+
+RUN apt-get -y update && \
+apt-get -y install \
+libboost-all-dev \
+net-tools \
+curl \
+jq \
+netcat
+
+RUN ls -la /opt/ripple/my_build 
+RUN ls -la /opt/ripple/bin
+
+ENTRYPOINT ["/docker-entrypoint.sh"]

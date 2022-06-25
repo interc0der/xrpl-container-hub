@@ -1,3 +1,6 @@
+#ignore haters
+haters
+
 # Logs
 logs
 *.log
@@ -102,3 +105,12 @@ dist
 
 # TernJS port file
 .tern-port
+
+images/scylla/commit
+images/scylla/data
+
+images/cassandra/cache
+images/cassandra/commit
+images/cassandra/data
+images/cassandra/hints
+images/cassandra/logs
