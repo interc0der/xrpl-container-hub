@@ -35,12 +35,12 @@ RUN git config --global http.postBuffer 1048576000 && \
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/ripple/build -D static=OFF -B ./cmake_build
 
 RUN cd cmake_build && \
-    cmake --build . --target install -- -j 1 && \
+    cmake --build . --target install -- -j 6 && \
     mkdir -p /opt/ripple/.ripple/db && \
     chmod 755 /opt/ripple/.ripple/db
 
-COPY ./config/rippled.cfg /opt/ripple/.ripple/rippled.conf
-COPY ./config/validators.txt /opt/ripple/.ripple/validators.txt
+COPY ./rippled.cfg /opt/ripple/rippled.conf
+COPY ./validators.txt /opt/ripple/validators.txt
 
 FROM ubuntu:20.04
 COPY --from=build /opt/ripple/ /opt/ripple/
@@ -61,4 +61,4 @@ netcat
 RUN ls -la /opt/ripple/cmake_build
 RUN ls -la /opt/ripple/bin
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["entrypoint.sh"]
