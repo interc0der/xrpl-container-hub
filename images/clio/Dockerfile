@@ -1,7 +1,5 @@
 FROM ubuntu:20.04 as build
 
-SHELL ["/bin/bash", "-c"]
-
 ARG VERSION=0.2.0
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -11,7 +9,8 @@ COPY entrypoint.sh .
 
 RUN apt-get -y update && \
 apt-get -y install \
-git \pkg-config \
+git \
+pkg-config \
 protobuf-compiler \
 libprotobuf-dev \
 libssl-dev \
@@ -26,18 +25,18 @@ RUN wget -q -O $HOME/boost_1_75_0.tar.gz https://boostorg.jfrog.io/artifactory/m
     tar -xzf $HOME/boost_1_75_0.tar.gz -C $HOME && \
     cd $HOME/boost_1_75_0 && \
     ./bootstrap.sh && \
-    ./b2 -j$(nproc) && \
-    echo "export BOOST_ROOT=$HOME/boost_1_75_0" >> $HOME/.profile && \
-    source $HOME/.profile
+    ./b2 -j$(nproc)
 
 RUN git clone --single-branch --branch "${VERSION}" https://github.com/XRPLF/clio.git /opt/clio
 
-RUN cd /opt/clio && \
-    git config --global http.postBuffer 1048576000 && \
-    cmake -B build && \
-    cmake --build build --parallel $(nproc)
+WORKDIR /opt/clio
 
 COPY ./config.json /opt/clio
+
+RUN echo "export BOOST_ROOT=$HOME/boost_1_75_0" >> $HOME/.profile && \
+    /bin/bash -c "source $HOME/.profile" && \
+    cmake -B build && \
+    cmake --build build --parallel $(nproc)
 
 FROM ubuntu:20.04
 COPY --from=build /opt/clio/ /opt/clio/
