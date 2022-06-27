@@ -8,6 +8,13 @@ services:
       context: './images/clio'
     restart: always
 
+  clio-build:
+    container_name: ${PROJECT_NAME}_clio
+    build:
+      dockerfile: Dockerfile.build
+      context: './images/clio'
+    restart: always
+
   xrpl:
     container_name: ${PROJECT_NAME}_xrpl
     build:
