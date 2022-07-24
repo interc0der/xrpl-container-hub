@@ -1,0 +1,64 @@
+FROM ubuntu:20.04 as build
+
+ARG VERSION=1.9.1
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN export LANGUAGE=C.UTF-8; export LANG=C.UTF-8; export LC_ALL=C.UTF-8
+
+RUN apt-get -y update && \
+apt-get -y install \
+git \
+build-essential \
+cmake \
+gcc \
+g++ \
+protobuf-compiler \
+libprotobuf-dev \
+flex \
+bison \
+libssl-dev \
+libboost-all-dev \
+pkg-config
+
+RUN echo "* soft nofile 1048576" >> /etc/security/limits.conf && \
+    echo "* hard nofile 1048576" >> /etc/security/limits.conf && \
+    echo "{{ ops_user }} soft nofile 1048576" >> /etc/security/limits.conf && \
+    echo "{{ ops_user }} hard nofile 1048576" >> /etc/security/limits.conf && \
+    cat /etc/security/limits.conf && \
+    ulimit -Sn
+
+RUN git clone --single-branch --branch "${VERSION}" https://github.com/ripple/rippled.git /opt/ripple
+
+WORKDIR /opt/ripple
+
+RUN git config --global http.postBuffer 1048576000 && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/ripple/build -D static=OFF -B ./cmake_build
+
+RUN cd cmake_build && \
+    cmake --build . --target install -- -j 6 && \
+    mkdir -p /opt/ripple/.ripple/db && \
+    chmod 755 /opt/ripple/.ripple/db
+
+COPY ./rippled.cfg /opt/ripple/rippled.conf
+COPY ./validators.txt /opt/ripple/validators.txt
+
+FROM ubuntu:20.04
+COPY --from=build /opt/ripple/ /opt/ripple/
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN export LANGUAGE=C.UTF-8; export LANG=C.UTF-8; export LC_ALL=C.UTF-8
+ENV PATH="/opt/ripple/build/bin:${PATH}"
+
+RUN apt-get -y update && \
+apt-get -y install \
+libboost-all-dev \
+net-tools \
+curl \
+jq \
+netcat
+
+RUN ls -la /opt/ripple/cmake_build
+RUN ls -la /opt/ripple/bin
+
+ENTRYPOINT ["entrypoint.sh"]

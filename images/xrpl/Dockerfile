@@ -1,64 +1,23 @@
-FROM ubuntu:20.04 as build
-
-ARG VERSION=1.9.1
-ARG DEBIAN_FRONTEND=noninteractive
-
-RUN export LANGUAGE=C.UTF-8; export LANG=C.UTF-8; export LC_ALL=C.UTF-8
-
-RUN apt-get -y update && \
-apt-get -y install \
-git \
-build-essential \
-cmake \
-gcc \
-g++ \
-protobuf-compiler \
-libprotobuf-dev \
-flex \
-bison \
-libssl-dev \
-libboost-all-dev \
-pkg-config
-
-RUN echo "* soft nofile 1048576" >> /etc/security/limits.conf && \
-    echo "* hard nofile 1048576" >> /etc/security/limits.conf && \
-    echo "{{ ops_user }} soft nofile 1048576" >> /etc/security/limits.conf && \
-    echo "{{ ops_user }} hard nofile 1048576" >> /etc/security/limits.conf && \
-    cat /etc/security/limits.conf && \
-    ulimit -Sn
-
-RUN git clone --single-branch --branch "${VERSION}" https://github.com/ripple/rippled.git /opt/ripple
-
-WORKDIR /opt/ripple
-
-RUN git config --global http.postBuffer 1048576000 && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/ripple/build -D static=OFF -B ./cmake_build
-
-RUN cd cmake_build && \
-    cmake --build . --target install -- -j 6 && \
-    mkdir -p /opt/ripple/.ripple/db && \
-    chmod 755 /opt/ripple/.ripple/db
-
-COPY ./rippled.cfg /opt/ripple/rippled.conf
-COPY ./validators.txt /opt/ripple/validators.txt
-
 FROM ubuntu:20.04
-COPY --from=build /opt/ripple/ /opt/ripple/
 
-ARG DEBIAN_FRONTEND=noninteractive
+RUN export LANGUAGE=C.UTF-8; export LANG=C.UTF-8; export LC_ALL=C.UTF-8; export DEBIAN_FRONTEND=noninteractive
 
-RUN export LANGUAGE=C.UTF-8; export LANG=C.UTF-8; export LC_ALL=C.UTF-8
-ENV PATH="/opt/ripple/build/bin:${PATH}"
+COPY docker-entrypoint.sh /
 
-RUN apt-get -y update && \
-apt-get -y install \
-libboost-all-dev \
-net-tools \
-curl \
-jq \
-netcat
+RUN apt-get -y update
 
-RUN ls -la /opt/ripple/cmake_build
-RUN ls -la /opt/ripple/bin
+RUN apt-get -y install apt-transport-https ca-certificates wget gnupg && \
+    wget -q -O - "https://repos.ripple.com/repos/api/gpg/key/public" | apt-key add - && \
+    echo "deb https://repos.ripple.com/repos/rippled-deb focal stable" | tee -a /etc/apt/sources.list.d/ripple.list && \
+    apt-get -y update && \
+    apt-get -y install rippled && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt clean && \
+    export PATH=$PATH:/opt/ripple/bin/ && \
+    chmod +x /docker-entrypoint.sh && \
+    echo '#!/bin/bash' > /usr/bin/server_info && echo '/entrypoint.sh server_info' >> /usr/bin/server_info && \
+    chmod +x /usr/bin/server_info
+
+RUN ln -s /opt/ripple/bin/rippled /usr/bin/rippled
 
 ENTRYPOINT ["entrypoint.sh"]

@@ -9,7 +9,7 @@ services:
     restart: always
 
   clio-build:
-    container_name: ${PROJECT_NAME}_clio
+    container_name: ${PROJECT_NAME}_clio_build
     build:
       dockerfile: Dockerfile.build
       context: './images/clio'
@@ -29,10 +29,10 @@ services:
     volumes:
       - ./images/xrpl/db:/var/lib/rippled/db
 
-  xrpl-boost:
-    container_name: ${PROJECT_NAME}_xrplboost
+  xrpl-build:
+    container_name: ${PROJECT_NAME}_xrpl_build
     build:
-      dockerfile: Dockerfile.boost
+      dockerfile: Dockerfile.build
       context: './images/xrpl'
     restart: always
     ports:
