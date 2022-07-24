@@ -2,8 +2,6 @@ FROM ubuntu:20.04
 
 RUN export LANGUAGE=C.UTF-8; export LANG=C.UTF-8; export LC_ALL=C.UTF-8; export DEBIAN_FRONTEND=noninteractive
 
-COPY docker-entrypoint.sh /
-
 RUN apt-get -y update
 
 RUN apt-get -y install apt-transport-https ca-certificates wget gnupg && \
@@ -20,4 +18,9 @@ RUN apt-get -y install apt-transport-https ca-certificates wget gnupg && \
 
 RUN ln -s /opt/ripple/bin/rippled /usr/bin/rippled
 
-ENTRYPOINT ["entrypoint.sh"]
+WORKDIR /opt/ripple
+COPY ./rippled.cfg .
+COPY ./validators.txt .
+COPY entrypoint.sh .
+
+ENTRYPOINT ["./entrypoint.sh"]

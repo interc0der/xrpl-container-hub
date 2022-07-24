@@ -18,7 +18,7 @@ flex \
 bison \
 libssl-dev \
 libboost-all-dev \
-pkg-config
+pkg-config 
 
 RUN echo "* soft nofile 1048576" >> /etc/security/limits.conf && \
     echo "* hard nofile 1048576" >> /etc/security/limits.conf && \
@@ -39,8 +39,8 @@ RUN cd cmake_build && \
     mkdir -p /opt/ripple/.ripple/db && \
     chmod 755 /opt/ripple/.ripple/db
 
-COPY ./rippled.cfg /opt/ripple/rippled.conf
-COPY ./validators.txt /opt/ripple/validators.txt
+COPY ./rippled.cfg .
+COPY ./validators.txt .
 
 FROM ubuntu:20.04
 COPY --from=build /opt/ripple/ /opt/ripple/
@@ -61,4 +61,6 @@ netcat
 RUN ls -la /opt/ripple/cmake_build
 RUN ls -la /opt/ripple/bin
 
-ENTRYPOINT ["entrypoint.sh"]
+COPY entrypoint.sh .
+
+ENTRYPOINT ["./entrypoint.sh"]
