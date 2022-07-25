@@ -14,25 +14,11 @@ if [ $? -ne 0 ]; then
 fi    
 
 # compose
-docker-compose --version
+docker compose --version
 if [ $? -ne 0 ]; then
-    echo "Installing docker-compose"
+    echo "Installing docker compose"
     sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     sudo chmod +x /usr/local/bin/docker-compose
-fi
-
-# openssl
-openssl version
-if [[ $? -ne 0 ]]; then
-    echo "Installing openssl"
-    sudo apt-get -y install openssl
-fi
-
-# jq
-jq --version
-if [[ $? -ne 0 ]]; then
-    echo "Installing jq"
-    sudo apt-get -y install jq
 fi
 
 echo "Installation finished."

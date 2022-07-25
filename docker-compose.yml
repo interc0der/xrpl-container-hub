@@ -2,21 +2,21 @@ version: '3.8'
 
 services:
   clio:
-    container_name: ${PROJECT_NAME}_clio
+    container_name: clio
     build:
       dockerfile: Dockerfile
       context: './images/clio'
     restart: always
 
   clio-build:
-    container_name: ${PROJECT_NAME}_clio_build
+    container_name: clio_build
     build:
       dockerfile: Dockerfile.build
       context: './images/clio'
     restart: always
 
   xrpl:
-    container_name: ${PROJECT_NAME}_xrpl
+    container_name: xrpl
     build:
       dockerfile: Dockerfile
       context: './images/xrpl'
@@ -26,11 +26,12 @@ services:
       - 6005:6005
       - 51234:51234
       - 51235:51235
+      - 50051:50051
     volumes:
       - ./images/xrpl/db:/var/lib/rippled/db
 
   xrpl-build:
-    container_name: ${PROJECT_NAME}_xrpl_build
+    container_name: xrpl_build
     build:
       dockerfile: Dockerfile.build
       context: './images/xrpl'
@@ -40,12 +41,13 @@ services:
       - 6005:6005
       - 51234:51234
       - 51235:51235
+      - 50051:50051
     volumes:
       - ./images/xrpl/db:/var/lib/rippled/db
 
   cassandra:
     image: 'cassandra:latest'
-    container_name: ${PROJECT_NAME}_cassandra
+    container_name: cassandra
     restart: always
     ports:
       - 9042:9042
